@@ -1,0 +1,44 @@
+name: Update Spec
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Download latest spec
+        run: |
+          curl -sL "https://tripletex.no/v2/openapi.json" -o specs/tripletex-openapi-original.json
+
+      - name: Check for changes
+        id: diff
+        run: |
+          if git diff --quiet specs/tripletex-openapi-original.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Preprocess and regenerate
+        if: steps.diff.outputs.changed == 'true'
+        run: bash scripts/generate-all.sh
+
+      - name: Create PR
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          title: "chore: update Tripletex OpenAPI spec"
+          body: "Automated weekly spec update. Review generated code changes."
+          branch: chore/update-spec
+          commit-message: "chore: update Tripletex OpenAPI spec"

@@ -1,0 +1,79 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Tripletex.Api.Authentication;
+using Tripletex.Api.Handlers;
+using Tripletex.Api.Models;
+using Tripletex.Api.Operations;
+
+namespace Tripletex.Api;
+
+public sealed class TripletexClient : IDisposable
+{
+    private readonly HttpClient _httpClient;
+    private readonly SessionTokenProvider _tokenProvider;
+    private readonly bool _ownsHttpClient;
+
+    public TimesheetOperations Timesheet { get; }
+    public InvoiceOperations Invoice { get; }
+    public EmployeeOperations Employee { get; }
+    public ProjectOperations Project { get; }
+    public CustomerOperations Customer { get; }
+    public SupplierOperations Supplier { get; }
+
+    public TripletexClient(TripletexOptions options, ILoggerFactory? loggerFactory = null)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        loggerFactory ??= NullLoggerFactory.Instance;
+        var logger = loggerFactory.CreateLogger<TripletexClient>();
+
+        var authFreeClient = new HttpClient { BaseAddress = new Uri(options.BaseUrl) };
+
+        _tokenProvider = new SessionTokenProvider(
+            options.ConsumerToken,
+            options.EmployeeToken,
+            options.BaseUrl,
+            options.SessionLifetime,
+            authFreeClient,
+            loggerFactory.CreateLogger<SessionTokenProvider>());
+
+        var pathRewriter = new PathRewriteHandler(PathMappings.Default) { InnerHandler = new HttpClientHandler() };
+        var rateLimiter = new RateLimitHandler(options.MaxRetries, options.RetryBaseDelay, logger) { InnerHandler = pathRewriter };
+        var errorHandler = new ErrorHandler { InnerHandler = rateLimiter };
+        var authHandler = new BasicAuthHandler(_tokenProvider) { InnerHandler = errorHandler };
+
+        _httpClient = new HttpClient(authHandler)
+        {
+            BaseAddress = new Uri(options.BaseUrl)
+        };
+        _ownsHttpClient = true;
+
+        Timesheet = new TimesheetOperations(_httpClient);
+        Invoice = new InvoiceOperations(_httpClient);
+        Employee = new EmployeeOperations(_httpClient);
+        Project = new ProjectOperations(_httpClient);
+        Customer = new CustomerOperations(_httpClient);
+        Supplier = new SupplierOperations(_httpClient);
+    }
+
+    internal TripletexClient(HttpClient httpClient, SessionTokenProvider tokenProvider)
+    {
+        _httpClient = httpClient;
+        _tokenProvider = tokenProvider;
+        _ownsHttpClient = false;
+
+        Timesheet = new TimesheetOperations(_httpClient);
+        Invoice = new InvoiceOperations(_httpClient);
+        Employee = new EmployeeOperations(_httpClient);
+        Project = new ProjectOperations(_httpClient);
+        Customer = new CustomerOperations(_httpClient);
+        Supplier = new SupplierOperations(_httpClient);
+    }
+
+    public void Dispose()
+    {
+        _tokenProvider.Dispose();
+        if (_ownsHttpClient)
+            _httpClient.Dispose();
+    }
+}
