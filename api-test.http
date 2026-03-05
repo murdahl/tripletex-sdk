@@ -1,0 +1,26 @@
+### Variables — replace with your actual tokens
+# Consumer token and emplyee token set in user settings
+
+@baseUrl = https://tripletex.no/v2
+
+### Create session token (production)
+# @name createSession
+PUT {{baseUrl}}/token/session/:create?consumerToken={{consumerToken}}&employeeToken={{employeeToken}}&expirationDate=2026-03-10
+
+### Extract session token from response
+@sessionToken = {{createSession.response.body.$.value.token}}
+
+### Test authentication — list projects
+GET {{baseUrl}}/project?from=0&count=5
+Authorization: Basic 0:{{sessionToken}}
+
+### List employees
+GET {{baseUrl}}/employee?from=0&count=5
+Authorization: Basic 0:{{sessionToken}}
+
+### List recent timesheet entries
+GET {{baseUrl}}/timesheet/entry/>recent?count=5
+Authorization: Basic 0:{{sessionToken}}
+
+### Create session token (test environment)
+# PUT https://api-test.tripletex.tech/v2/token/session/:create?consumerToken={{consumerToken}}&employeeToken={{employeeToken}}&expirationDate=2026-03-10

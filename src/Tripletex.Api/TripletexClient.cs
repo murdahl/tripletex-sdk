@@ -21,6 +21,7 @@ public sealed class TripletexClient : IDisposable
     public ProjectOperations Project { get; }
     public CustomerOperations Customer { get; }
     public SupplierOperations Supplier { get; }
+    public ActivityOperations Activity { get; }
 
     public TripletexClient(TripletexOptions options, ILoggerFactory? loggerFactory = null)
     {
@@ -56,6 +57,7 @@ public sealed class TripletexClient : IDisposable
         Project = new ProjectOperations(_httpClient);
         Customer = new CustomerOperations(_httpClient);
         Supplier = new SupplierOperations(_httpClient);
+        Activity = new ActivityOperations(_httpClient);
     }
 
     internal TripletexClient(HttpClient httpClient, SessionTokenProvider tokenProvider)
@@ -70,6 +72,7 @@ public sealed class TripletexClient : IDisposable
         Project = new ProjectOperations(_httpClient);
         Customer = new CustomerOperations(_httpClient);
         Supplier = new SupplierOperations(_httpClient);
+        Activity = new ActivityOperations(_httpClient);
     }
 
     public void Dispose()

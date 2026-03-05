@@ -48,7 +48,7 @@ internal sealed class SessionTokenProvider : IDisposable
             _logger.LogDebug("Creating new Tripletex session token");
 
             var expirationDate = DateTimeOffset.UtcNow.Add(_sessionLifetime).ToString("yyyy-MM-dd");
-            var url = $"{_baseUrl}/token/session/:create?consumerToken={Uri.EscapeDataString(_consumerToken)}&employeeToken={Uri.EscapeDataString(_employeeToken)}&expirationDate={expirationDate}";
+            var url = $"{_baseUrl.TrimEnd('/')}/token/session/:create?consumerToken={Uri.EscapeDataString(_consumerToken)}&employeeToken={Uri.EscapeDataString(_employeeToken)}&expirationDate={expirationDate}";
 
             using var request = new HttpRequestMessage(HttpMethod.Put, url);
             using var response = await _httpClient.SendAsync(request, ct);
@@ -63,7 +63,7 @@ internal sealed class SessionTokenProvider : IDisposable
 
             _session = new SessionInfo(
                 value.Token ?? throw new InvalidOperationException("Session token is null"),
-                value.EncryptedId ?? throw new InvalidOperationException("Session token response missing encryptedId"),
+                0,
                 DateTimeOffset.UtcNow.Add(_sessionLifetime));
 
             _logger.LogDebug("Session token created, company ID: {CompanyId}, expires: {Expires}",
@@ -91,9 +91,6 @@ internal sealed class SessionTokenProvider : IDisposable
     {
         [JsonPropertyName("id")]
         public int Id { get; set; }
-
-        [JsonPropertyName("encryptedId")]
-        public int? EncryptedId { get; set; }
 
         [JsonPropertyName("token")]
         public string? Token { get; set; }
