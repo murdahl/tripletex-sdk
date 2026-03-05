@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Tripletex.Api.Models;
 
 public sealed class FieldSelector
