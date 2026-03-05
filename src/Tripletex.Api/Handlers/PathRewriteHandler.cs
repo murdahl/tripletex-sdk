@@ -1,7 +1,17 @@
 namespace Tripletex.Api.Handlers;
 
-internal sealed class PathRewriteHandler(IReadOnlyDictionary<string, string> pathMappings) : DelegatingHandler
+internal sealed class PathRewriteHandler : DelegatingHandler
 {
+    private readonly (string Sanitized, string Original)[] _mappings;
+
+    public PathRewriteHandler(IReadOnlyDictionary<string, string> pathMappings)
+    {
+        _mappings = pathMappings
+            .OrderByDescending(kvp => kvp.Key.Length)
+            .Select(kvp => (kvp.Key, kvp.Value))
+            .ToArray();
+    }
+
     protected override Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)
     {
@@ -22,10 +32,10 @@ internal sealed class PathRewriteHandler(IReadOnlyDictionary<string, string> pat
 
     internal string RewritePath(string path)
     {
-        foreach (var (sanitized, original) in pathMappings)
+        foreach (var (sanitized, original) in _mappings)
         {
-            if (path.Contains(sanitized, StringComparison.OrdinalIgnoreCase))
-                return path.Replace(sanitized, original, StringComparison.OrdinalIgnoreCase);
+            if (path.EndsWith(sanitized, StringComparison.OrdinalIgnoreCase))
+                return string.Concat(path.AsSpan(0, path.Length - sanitized.Length), original);
         }
 
         return path;

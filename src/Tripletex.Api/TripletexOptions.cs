@@ -2,8 +2,8 @@ namespace Tripletex.Api;
 
 public sealed class TripletexOptions
 {
-    public required string ConsumerToken { get; set; }
-    public required string EmployeeToken { get; set; }
+    public string ConsumerToken { get; set; } = string.Empty;
+    public string EmployeeToken { get; set; } = string.Empty;
     public TripletexEnvironment Environment { get; set; } = TripletexEnvironment.Production;
     public TimeSpan SessionLifetime { get; set; } = TimeSpan.FromHours(24);
     public int MaxRetries { get; set; } = 3;

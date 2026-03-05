@@ -8,9 +8,21 @@ internal sealed class RateLimitHandler(int maxRetries, TimeSpan baseDelay, ILogg
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)
     {
+        byte[]? contentBytes = null;
+        string? contentMediaType = null;
+        IEnumerable<KeyValuePair<string, IEnumerable<string>>>? contentHeaders = null;
+
+        if (request.Content is not null)
+        {
+            contentBytes = await request.Content.ReadAsByteArrayAsync(cancellationToken);
+            contentMediaType = request.Content.Headers.ContentType?.ToString();
+            contentHeaders = request.Content.Headers.ToList();
+        }
+
         for (var attempt = 0; attempt <= maxRetries; attempt++)
         {
-            var response = await base.SendAsync(CloneRequest(request), cancellationToken);
+            var response = await base.SendAsync(
+                CloneRequest(request, contentBytes, contentMediaType, contentHeaders), cancellationToken);
 
             if (response.StatusCode != HttpStatusCode.TooManyRequests)
                 return response;
@@ -19,6 +31,7 @@ internal sealed class RateLimitHandler(int maxRetries, TimeSpan baseDelay, ILogg
                 return response;
 
             var delay = GetRetryDelay(response, attempt);
+            response.Dispose();
             logger.LogWarning("Rate limited (429). Retrying in {Delay}ms (attempt {Attempt}/{MaxRetries})",
                 delay.TotalMilliseconds, attempt + 1, maxRetries);
 
@@ -40,17 +53,30 @@ internal sealed class RateLimitHandler(int maxRetries, TimeSpan baseDelay, ILogg
         return TimeSpan.FromMilliseconds(baseDelay.TotalMilliseconds * Math.Pow(2, attempt));
     }
 
-    private static HttpRequestMessage CloneRequest(HttpRequestMessage original)
+    private static HttpRequestMessage CloneRequest(
+        HttpRequestMessage original,
+        byte[]? contentBytes,
+        string? contentMediaType,
+        IEnumerable<KeyValuePair<string, IEnumerable<string>>>? contentHeaders)
     {
         var clone = new HttpRequestMessage(original.Method, original.RequestUri);
-        clone.Content = original.Content;
         clone.Version = original.Version;
+
+        if (contentBytes is not null)
+        {
+            clone.Content = new ByteArrayContent(contentBytes);
+            if (contentHeaders is not null)
+            {
+                foreach (var header in contentHeaders)
+                    clone.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+        }
 
         foreach (var header in original.Headers)
             clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
 
-        foreach (var prop in original.Options)
-            ((IDictionary<string, object?>)clone.Options).Add(prop.Key, prop.Value);
+        foreach (var option in original.Options)
+            clone.Options.Set(new HttpRequestOptionsKey<object?>(option.Key), option.Value);
 
         return clone;
     }

@@ -13,7 +13,7 @@ if (!File.Exists(inputPath))
 
     using var httpClient = new HttpClient();
     var specJson = await httpClient.GetStringAsync("https://tripletex.no/v2/openapi.json");
-    Directory.CreateDirectory(Path.GetDirectoryName(inputPath)!);
+    EnsureDirectoryExists(inputPath);
     await File.WriteAllTextAsync(inputPath, specJson);
     Console.WriteLine($"Downloaded spec to {inputPath}");
 }
@@ -47,16 +47,23 @@ foreach (var (original, sanitized) in pathsToRename)
     paths[sanitized] = value!.DeepClone();
 }
 
-Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+EnsureDirectoryExists(outputPath);
 var options = new JsonSerializerOptions { WriteIndented = true };
 await File.WriteAllTextAsync(outputPath, doc.ToJsonString(options));
 Console.WriteLine($"Wrote processed spec to {outputPath} ({paths.Count} paths)");
 
-Directory.CreateDirectory(Path.GetDirectoryName(mappingsPath)!);
+EnsureDirectoryExists(mappingsPath);
 await GenerateMappingsFile(mappingsPath, mappings);
 Console.WriteLine($"Wrote {mappings.Count} path mappings to {mappingsPath}");
 
 return 0;
+
+static void EnsureDirectoryExists(string filePath)
+{
+    var dir = Path.GetDirectoryName(filePath);
+    if (!string.IsNullOrEmpty(dir))
+        Directory.CreateDirectory(dir);
+}
 
 static string SanitizePath(string path, Dictionary<string, string> mappings)
 {

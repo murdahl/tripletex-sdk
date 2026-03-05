@@ -15,7 +15,7 @@ public static class PaginationExtensions
 
         while (true)
         {
-            var response = await requestFactory(from, pageSize, cancellationToken);
+            using var response = await requestFactory(from, pageSize, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync(cancellationToken);

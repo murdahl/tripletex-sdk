@@ -19,8 +19,4 @@
     <ProjectReference Include="..\..\src\Tripletex.Api\Tripletex.Api.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <InternalsVisibleTo Include="Tripletex.Api.Tests.Unit" />
-  </ItemGroup>
-
 </Project>

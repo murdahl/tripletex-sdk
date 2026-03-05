@@ -14,34 +14,37 @@ internal sealed class ErrorHandler : DelegatingHandler
         if (response.IsSuccessStatusCode)
             return response;
 
-        var statusCode = (int)response.StatusCode;
-        string? body = null;
-
-        try
+        using (response)
         {
-            body = await response.Content.ReadAsStringAsync(cancellationToken);
-            var error = JsonSerializer.Deserialize<TripletexErrorResponse>(body);
+            var statusCode = (int)response.StatusCode;
+            string? body = null;
 
-            if (error is not null)
+            try
             {
-                throw new TripletexApiException(
-                    statusCode,
-                    error.Message,
-                    error.Code,
-                    error.DeveloperMessage,
-                    error.RequestId,
-                    error.ValidationMessages?.AsReadOnly());
-            }
-        }
-        catch (TripletexApiException)
-        {
-            throw;
-        }
-        catch
-        {
-            // JSON parse failed — throw generic
-        }
+                body = await response.Content.ReadAsStringAsync(cancellationToken);
+                var error = JsonSerializer.Deserialize<TripletexErrorResponse>(body);
 
-        throw new TripletexApiException(statusCode, body ?? $"HTTP {statusCode}");
+                if (error is not null)
+                {
+                    throw new TripletexApiException(
+                        statusCode,
+                        error.Message,
+                        error.Code,
+                        error.DeveloperMessage,
+                        error.RequestId,
+                        error.ValidationMessages?.AsReadOnly());
+                }
+            }
+            catch (TripletexApiException)
+            {
+                throw;
+            }
+            catch
+            {
+                // JSON parse failed — throw generic
+            }
+
+            throw new TripletexApiException(statusCode, body ?? $"HTTP {statusCode}");
+        }
     }
 }
