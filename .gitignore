@@ -32,7 +32,7 @@ specs/tripletex-openapi-processed.json
 src/Tripletex.Api/Generated/Client/
 
 ## Claude
-.claude/settings.local.json
+.claude/
 
 ## OS
 .DS_Store
