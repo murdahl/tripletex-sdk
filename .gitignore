@@ -32,7 +32,8 @@ specs/tripletex-openapi-processed.json
 src/Tripletex.Api/Generated/Client/
 
 ## Claude
-.claude/
+.claude/*
+!.claude/commands/
 
 ## OS
 .DS_Store

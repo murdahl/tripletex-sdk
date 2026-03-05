@@ -53,6 +53,18 @@ tripletex config show
 tripletex config unset --all
 ```
 
+### Claude Code Skill
+
+A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skill is included at `.claude/commands/tripletex.md`. It lets Claude use the CLI on your behalf via natural language:
+
+```
+/tripletex log 7.5 hours today
+/tripletex show my recent timesheet entries
+/tripletex search for projects matching "Website"
+```
+
+The skill is also installed globally if you copy it to `~/.claude/commands/`.
+
 ---
 
 ## SDK (NuGet library)
