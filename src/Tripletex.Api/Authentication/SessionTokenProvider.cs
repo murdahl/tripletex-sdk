@@ -63,7 +63,7 @@ internal sealed class SessionTokenProvider : IDisposable
 
             _session = new SessionInfo(
                 value.Token ?? throw new InvalidOperationException("Session token is null"),
-                0,
+                value.EncryptedId,
                 DateTimeOffset.UtcNow.Add(_sessionLifetime));
 
             _logger.LogDebug("Session token created, company ID: {CompanyId}, expires: {Expires}",
@@ -91,6 +91,9 @@ internal sealed class SessionTokenProvider : IDisposable
     {
         [JsonPropertyName("id")]
         public int Id { get; set; }
+
+        [JsonPropertyName("encryptedId")]
+        public int EncryptedId { get; set; }
 
         [JsonPropertyName("token")]
         public string? Token { get; set; }
