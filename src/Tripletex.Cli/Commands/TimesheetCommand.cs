@@ -144,7 +144,7 @@ public static class TimesheetCommand
                         if (resolvedComment is not null)
                             AnsiConsole.MarkupLine($"  Comment:  [cyan]{Markup.Escape(resolvedComment)}[/]");
 
-                        if (!AnsiConsole.Confirm("Submit?", defaultValue: false))
+                        if (!AnsiConsole.Confirm("Submit?", defaultValue: true))
                         {
                             step = firstStep;
                             resolvedHours = h;

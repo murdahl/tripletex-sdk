@@ -30,7 +30,7 @@ public class PathRewriteHandlerTests
     [InlineData("/v2/token/session/create", "/v2/token/session/:create")]
     [InlineData("/v2/timesheet/entry/last", "/v2/timesheet/entry/>last")]
     [InlineData("/v2/bank/unmatchedCsv", "/v2/bank/unmatched:csv")]
-    [InlineData("/v2/employee/123", "/v2/employee/123")]  // no rewrite needed
+    [InlineData("/v2/employee/123", "/v2/employee/123")]
     [InlineData("/v2/invoice/123/createCreditNote", "/v2/invoice/123/:createCreditNote")]
     [InlineData("/v2/invoice/123/createReminder", "/v2/invoice/123/:createReminder")]
     [InlineData("/v2/timesheet/month/approveList", "/v2/timesheet/month/:approveList")]

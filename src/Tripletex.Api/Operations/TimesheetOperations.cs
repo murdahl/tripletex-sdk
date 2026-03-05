@@ -102,17 +102,20 @@ public sealed class TimesheetOperations(HttpClient http)
         response.EnsureSuccessStatusCode();
     }
 
-    /// <summary>Get recent/active timesheet entries for the current user.</summary>
-    public async Task<ListResponse<TimesheetEntry>> GetRecentAsync(
+    /// <summary>Get recent timesheet entries (last 30 days, newest first).</summary>
+    public Task<ListResponse<TimesheetEntry>> GetRecentAsync(
         int count = 25,
         string? fields = null,
         CancellationToken ct = default)
     {
-        var url = $"timesheet/entry/>recent?count={count}";
-        if (fields is not null) url += $"&fields={Uri.EscapeDataString(fields)}";
-
-        var response = await http.GetFromJsonAsync<ListResponse<TimesheetEntry>>(url, ct);
-        return response ?? new ListResponse<TimesheetEntry>();
+        return SearchAsync(new TimesheetSearchOptions
+        {
+            DateFrom = DateOnly.FromDateTime(DateTime.Today.AddDays(-30)),
+            DateTo = DateOnly.FromDateTime(DateTime.Today.AddDays(1)),
+            Count = count,
+            Sorting = "-date",
+            Fields = fields,
+        }, ct);
     }
 
     /// <summary>Get the total hours summary for a period.</summary>
@@ -122,7 +125,7 @@ public sealed class TimesheetOperations(HttpClient http)
         DateOnly dateTo,
         CancellationToken ct = default)
     {
-        var url = $"timesheet/entry/>totalHours?employeeId={employeeId}" +
+        var url = $"timesheet/entry/totalHours?employeeId={employeeId}" +
                   $"&dateFrom={dateFrom:yyyy-MM-dd}&dateTo={dateTo:yyyy-MM-dd}";
 
         var response = await http.GetFromJsonAsync<SingleResponse<TimesheetTotalHours>>(url, ct);
@@ -199,7 +202,7 @@ public sealed class TimesheetOperations(HttpClient http)
         var query = parts.Count > 0 ? "?" + string.Join("&", parts) : "";
 
         var response = await http.GetFromJsonAsync<ListResponse<IdRef>>(
-            $"timesheet/entry/>recentActivities{query}", ct);
+            $"timesheet/entry/recentActivities{query}", ct);
         return response ?? new ListResponse<IdRef>();
     }
 
@@ -208,7 +211,7 @@ public sealed class TimesheetOperations(HttpClient http)
         int? employeeId = null,
         CancellationToken ct = default)
     {
-        var url = "timesheet/entry/>recentProjects";
+        var url = "timesheet/entry/recentProjects";
         if (employeeId.HasValue) url += $"?employeeId={employeeId}";
 
         var response = await http.GetFromJsonAsync<ListResponse<IdRef>>(url, ct);
