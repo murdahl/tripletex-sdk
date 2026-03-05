@@ -1,6 +1,7 @@
 using System.CommandLine;
 using Spectre.Console;
 using Tripletex.Api;
+using Tripletex.Api.Models;
 using Tripletex.Api.Operations;
 using Tripletex.Cli.Configuration;
 
@@ -143,7 +144,7 @@ public static class TimesheetCommand
                         if (resolvedComment is not null)
                             AnsiConsole.MarkupLine($"  Comment:  [cyan]{Markup.Escape(resolvedComment)}[/]");
 
-                        if (!AnsiConsole.Confirm("Submit?", defaultValue: true))
+                        if (!AnsiConsole.Confirm("Submit?", defaultValue: false))
                         {
                             step = firstStep;
                             resolvedHours = h;
@@ -152,9 +153,51 @@ public static class TimesheetCommand
                             break;
                         }
 
-                        var entry = await client.Timesheet.LogHoursAsync(
-                            resolvedActivity!.Value, resolvedProject!.Value, resolvedDate!.Value,
-                            resolvedHours!.Value, resolvedComment, resolvedEmployee);
+                        TimesheetEntry entry;
+                        try
+                        {
+                            entry = await client.Timesheet.LogHoursAsync(
+                                resolvedActivity!.Value, resolvedProject!.Value, resolvedDate!.Value,
+                                resolvedHours!.Value, resolvedComment, resolvedEmployee);
+                        }
+                        catch (TripletexApiException ex) when (ex.StatusCode == 409)
+                        {
+                            var existing = await client.Timesheet.SearchAsync(new TimesheetSearchOptions
+                            {
+                                EmployeeId = resolvedEmployee,
+                                ProjectId = resolvedProject,
+                                ActivityId = resolvedActivity,
+                                DateFrom = resolvedDate,
+                                DateTo = resolvedDate!.Value.AddDays(1),
+                            });
+
+                            var match = existing.Values?.FirstOrDefault();
+                            if (match is null)
+                            {
+                                AnsiConsole.MarkupLine("[red]Conflict: hours already registered but could not find existing entry.[/]");
+                                return;
+                            }
+
+                            AnsiConsole.MarkupLine($"[yellow]Already registered on {resolvedDate:yyyy-MM-dd}:[/]");
+                            AnsiConsole.MarkupLine($"  Hours:   [cyan]{match.Hours}[/]");
+                            if (!string.IsNullOrWhiteSpace(match.Comment))
+                                AnsiConsole.MarkupLine($"  Comment: [cyan]{Markup.Escape(match.Comment)}[/]");
+
+                            if (!AnsiConsole.Confirm($"Overwrite with [cyan]{resolvedHours}h[/]?", defaultValue: false))
+                                return;
+
+                            entry = await client.Timesheet.UpdateAsync(match.Id, new TimesheetEntryUpdate
+                            {
+                                Id = match.Id,
+                                Version = match.Version,
+                                Activity = new IdRef { Id = resolvedActivity!.Value },
+                                Project = new IdRef { Id = resolvedProject!.Value },
+                                Date = resolvedDate!.Value.ToString("yyyy-MM-dd"),
+                                Hours = resolvedHours!.Value,
+                                Comment = resolvedComment ?? "",
+                                Employee = resolvedEmployee.HasValue ? new IdRef { Id = resolvedEmployee.Value } : null,
+                            });
+                        }
 
                         if (json)
                         {
@@ -263,7 +306,7 @@ public static class TimesheetCommand
         var emp = selected;
         var name = $"{emp.FirstName} {emp.LastName}";
 
-        if (AnsiConsole.Confirm("Save as default employee?", defaultValue: true))
+        if (AnsiConsole.Confirm("Save as default employee?", defaultValue: false))
         {
             config.DefaultEmployeeId = emp.Id;
             config.DefaultEmployeeName = name;
@@ -304,7 +347,7 @@ public static class TimesheetCommand
 
         var project = selected;
 
-        if (AnsiConsole.Confirm("Save as default project?", defaultValue: true))
+        if (AnsiConsole.Confirm("Save as default project?", defaultValue: false))
         {
             config.DefaultProjectId = project.Id;
             config.DefaultProjectName = project.Name;
@@ -356,7 +399,7 @@ public static class TimesheetCommand
         var activity = selected;
         var activityName = activity.DisplayName ?? activity.Name ?? $"Activity {activity.Id}";
 
-        if (AnsiConsole.Confirm("Save as default activity?", defaultValue: true))
+        if (AnsiConsole.Confirm("Save as default activity?", defaultValue: false))
         {
             config.DefaultActivityId = activity.Id;
             config.DefaultActivityName = activityName;

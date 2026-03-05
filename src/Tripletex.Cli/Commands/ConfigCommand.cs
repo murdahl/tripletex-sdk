@@ -11,6 +11,7 @@ public static class ConfigCommand
         var cmd = new Command("config", "Manage CLI configuration");
         cmd.AddCommand(CreateSetCommand());
         cmd.AddCommand(CreateShowCommand());
+        cmd.AddCommand(CreateUnsetCommand());
         return cmd;
     }
 
@@ -54,6 +55,9 @@ public static class ConfigCommand
             table.AddRow("Consumer Token", Mask(config.ConsumerToken));
             table.AddRow("Employee Token", Mask(config.EmployeeToken));
             table.AddRow("Environment", config.Environment ?? "production");
+            table.AddRow("Default Employee", config.DefaultEmployeeId.HasValue
+                ? $"{config.DefaultEmployeeName} (ID: {config.DefaultEmployeeId})"
+                : "[dim]not set[/]");
             table.AddRow("Default Project", config.DefaultProjectId.HasValue
                 ? $"{config.DefaultProjectName} (ID: {config.DefaultProjectId})"
                 : "[dim]not set[/]");
@@ -63,6 +67,55 @@ public static class ConfigCommand
 
             AnsiConsole.Write(table);
         });
+
+        return cmd;
+    }
+
+    private static Command CreateUnsetCommand()
+    {
+        var employee = new Option<bool>("--employee", "Clear default employee");
+        var project = new Option<bool>("--project", "Clear default project");
+        var activity = new Option<bool>("--activity", "Clear default activity");
+        var all = new Option<bool>("--all", "Clear all defaults");
+
+        var cmd = new Command("unset", "Clear default employee, project, or activity")
+        {
+            employee, project, activity, all
+        };
+
+        cmd.SetHandler((emp, proj, act, clearAll) =>
+        {
+            var config = ConfigStore.Load();
+            var changed = false;
+
+            if (emp || clearAll)
+            {
+                config.DefaultEmployeeId = null;
+                config.DefaultEmployeeName = null;
+                changed = true;
+            }
+            if (proj || clearAll)
+            {
+                config.DefaultProjectId = null;
+                config.DefaultProjectName = null;
+                changed = true;
+            }
+            if (act || clearAll)
+            {
+                config.DefaultActivityId = null;
+                config.DefaultActivityName = null;
+                changed = true;
+            }
+
+            if (!changed)
+            {
+                AnsiConsole.MarkupLine("[yellow]Specify --employee, --project, --activity, or --all.[/]");
+                return;
+            }
+
+            ConfigStore.Save(config);
+            AnsiConsole.MarkupLine("[green]Defaults cleared.[/]");
+        }, employee, project, activity, all);
 
         return cmd;
     }
