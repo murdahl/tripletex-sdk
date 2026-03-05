@@ -4,8 +4,100 @@ on:
   push:
     tags: ['v*']
 
+permissions:
+  contents: write
+
 jobs:
-  publish:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+            artifact: tripletex-linux-x64
+          - os: ubuntu-latest
+            rid: linux-arm64
+            artifact: tripletex-linux-arm64
+          - os: macos-latest
+            rid: osx-arm64
+            artifact: tripletex-osx-arm64
+          - os: macos-latest
+            rid: osx-x64
+            artifact: tripletex-osx-x64
+          - os: windows-latest
+            rid: win-x64
+            artifact: tripletex-win-x64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish
+        run: >
+          dotnet publish src/Tripletex.Cli/Tripletex.Cli.csproj
+          -c Release
+          -r ${{ matrix.rid }}
+          -p:Version=${{ steps.version.outputs.VERSION }}
+          -o ./publish
+
+      - name: Archive (unix)
+        if: runner.os != 'Windows'
+        run: tar -czf ${{ matrix.artifact }}.tar.gz -C publish tripletex
+
+      - name: Archive (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path publish/tripletex.exe -DestinationPath ${{ matrix.artifact }}.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}.*
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Test
+        run: dotnet test -c Release --filter "Category!=Integration"
+
+  release:
+    needs: [build, test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: artifacts/*
+
+  publish-nuget:
+    needs: [test]
     runs-on: ubuntu-latest
 
     steps:
@@ -20,14 +112,15 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Build
-        run: dotnet build -c Release -p:Version=${{ steps.version.outputs.VERSION }}
-
-      - name: Test
-        run: dotnet test -c Release --no-build --filter "Category!=Integration"
-
       - name: Pack
-        run: dotnet pack src/Tripletex.Api/Tripletex.Api.csproj -c Release --no-build -p:Version=${{ steps.version.outputs.VERSION }} -o ./nupkg
+        run: >
+          dotnet pack src/Tripletex.Api/Tripletex.Api.csproj
+          -c Release
+          -p:Version=${{ steps.version.outputs.VERSION }}
+          -o ./nupkg
 
       - name: Push to NuGet
-        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        run: >
+          dotnet nuget push ./nupkg/*.nupkg
+          --api-key ${{ secrets.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json
