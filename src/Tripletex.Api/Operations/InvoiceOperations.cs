@@ -9,7 +9,7 @@ public sealed class InvoiceOperations(HttpClient http)
 {
     public async Task<Invoice> GetAsync(int id, string? fields = null, CancellationToken ct = default)
     {
-        var url = $"/invoice/{id}";
+        var url = $"invoice/{id}";
         if (fields is not null) url += $"?fields={Uri.EscapeDataString(fields)}";
 
         var response = await http.GetFromJsonAsync<SingleResponse<Invoice>>(url, ct);
@@ -33,7 +33,7 @@ public sealed class InvoiceOperations(HttpClient http)
         parts.Add($"count={count}");
         if (fields is not null) parts.Add($"fields={Uri.EscapeDataString(fields)}");
 
-        var url = "/invoice?" + string.Join("&", parts);
+        var url = "invoice?" + string.Join("&", parts);
         var response = await http.GetFromJsonAsync<ListResponse<Invoice>>(url, ct);
         return response ?? new ListResponse<Invoice>();
     }
@@ -56,7 +56,7 @@ public sealed class InvoiceOperations(HttpClient http)
                 parts.Add($"from={f}");
                 parts.Add($"count={c}");
                 if (fields is not null) parts.Add($"fields={Uri.EscapeDataString(fields)}");
-                return http.GetAsync("/invoice?" + string.Join("&", parts), token);
+                return http.GetAsync("invoice?" + string.Join("&", parts), token);
             },
             pageSize, ct))
         {
@@ -66,7 +66,7 @@ public sealed class InvoiceOperations(HttpClient http)
 
     public async Task<Invoice> CreateAsync(InvoiceCreate invoice, CancellationToken ct = default)
     {
-        var response = await http.PostAsJsonAsync("/invoice", invoice, ct);
+        var response = await http.PostAsJsonAsync("invoice", invoice, ct);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<SingleResponse<Invoice>>(ct);
         return result?.Value ?? throw new InvalidOperationException("Failed to create invoice");
@@ -74,13 +74,13 @@ public sealed class InvoiceOperations(HttpClient http)
 
     public async Task SendAsync(int id, CancellationToken ct = default)
     {
-        var response = await http.PutAsync($"/invoice/{id}/:send", null, ct);
+        var response = await http.PutAsync($"invoice/{id}/:send", null, ct);
         response.EnsureSuccessStatusCode();
     }
 
     public async Task<Invoice> CreateCreditNoteAsync(int id, CancellationToken ct = default)
     {
-        var response = await http.PutAsync($"/invoice/{id}/:createCreditNote", null, ct);
+        var response = await http.PutAsync($"invoice/{id}/:createCreditNote", null, ct);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<SingleResponse<Invoice>>(ct);
         return result?.Value ?? throw new InvalidOperationException("Failed to create credit note");

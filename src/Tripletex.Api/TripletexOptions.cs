@@ -11,8 +11,8 @@ public sealed class TripletexOptions
 
     public string BaseUrl => Environment switch
     {
-        TripletexEnvironment.Test => "https://api-test.tripletex.tech/v2",
-        TripletexEnvironment.Production => "https://tripletex.no/v2",
+        TripletexEnvironment.Test => "https://api-test.tripletex.tech/v2/",
+        TripletexEnvironment.Production => "https://tripletex.no/v2/",
         _ => throw new ArgumentOutOfRangeException(nameof(Environment))
     };
 }

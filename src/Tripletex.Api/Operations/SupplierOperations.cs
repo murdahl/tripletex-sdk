@@ -9,7 +9,7 @@ public sealed class SupplierOperations(HttpClient http)
 {
     public async Task<Supplier> GetAsync(int id, string? fields = null, CancellationToken ct = default)
     {
-        var url = $"/supplier/{id}";
+        var url = $"supplier/{id}";
         if (fields is not null) url += $"?fields={Uri.EscapeDataString(fields)}";
 
         var response = await http.GetFromJsonAsync<SingleResponse<Supplier>>(url, ct);
@@ -31,7 +31,7 @@ public sealed class SupplierOperations(HttpClient http)
         parts.Add($"count={count}");
         if (fields is not null) parts.Add($"fields={Uri.EscapeDataString(fields)}");
 
-        var url = "/supplier?" + string.Join("&", parts);
+        var url = "supplier?" + string.Join("&", parts);
         var response = await http.GetFromJsonAsync<ListResponse<Supplier>>(url, ct);
         return response ?? new ListResponse<Supplier>();
     }
@@ -42,7 +42,7 @@ public sealed class SupplierOperations(HttpClient http)
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         await foreach (var item in PaginationExtensions.PaginateAsync<Supplier>(
-            (f, c, token) => http.GetAsync($"/supplier?from={f}&count={c}" +
+            (f, c, token) => http.GetAsync($"supplier?from={f}&count={c}" +
                 (fields is not null ? $"&fields={Uri.EscapeDataString(fields)}" : ""), token),
             pageSize, ct))
         {
@@ -52,7 +52,7 @@ public sealed class SupplierOperations(HttpClient http)
 
     public async Task<Supplier> CreateAsync(SupplierCreate supplier, CancellationToken ct = default)
     {
-        var response = await http.PostAsJsonAsync("/supplier", supplier, ct);
+        var response = await http.PostAsJsonAsync("supplier", supplier, ct);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<SingleResponse<Supplier>>(ct);
         return result?.Value ?? throw new InvalidOperationException("Failed to create supplier");
@@ -60,7 +60,7 @@ public sealed class SupplierOperations(HttpClient http)
 
     public async Task<Supplier> UpdateAsync(int id, Supplier supplier, CancellationToken ct = default)
     {
-        var response = await http.PutAsJsonAsync($"/supplier/{id}", supplier, ct);
+        var response = await http.PutAsJsonAsync($"supplier/{id}", supplier, ct);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<SingleResponse<Supplier>>(ct);
         return result?.Value ?? throw new InvalidOperationException("Failed to update supplier");

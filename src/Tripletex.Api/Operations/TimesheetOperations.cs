@@ -12,7 +12,7 @@ public sealed class TimesheetOperations(HttpClient http)
     /// <summary>Get a single timesheet entry by ID.</summary>
     public async Task<TimesheetEntry> GetAsync(int id, string? fields = null, CancellationToken ct = default)
     {
-        var url = $"/timesheet/entry/{id}";
+        var url = $"timesheet/entry/{id}";
         if (fields is not null) url += $"?fields={Uri.EscapeDataString(fields)}";
 
         var response = await http.GetFromJsonAsync<SingleResponse<TimesheetEntry>>(url, ct);
@@ -56,7 +56,7 @@ public sealed class TimesheetOperations(HttpClient http)
     /// <summary>Create a new timesheet entry (log hours).</summary>
     public async Task<TimesheetEntry> CreateAsync(TimesheetEntryCreate entry, CancellationToken ct = default)
     {
-        var response = await http.PostAsJsonAsync("/timesheet/entry", entry, ct);
+        var response = await http.PostAsJsonAsync("timesheet/entry", entry, ct);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<SingleResponse<TimesheetEntry>>(ct);
@@ -67,7 +67,7 @@ public sealed class TimesheetOperations(HttpClient http)
     public async Task<ListResponse<TimesheetEntry>> CreateBulkAsync(
         IEnumerable<TimesheetEntryCreate> entries, CancellationToken ct = default)
     {
-        var response = await http.PostAsJsonAsync("/timesheet/entry/list", entries, ct);
+        var response = await http.PostAsJsonAsync("timesheet/entry/list", entries, ct);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<ListResponse<TimesheetEntry>>(ct);
@@ -77,7 +77,7 @@ public sealed class TimesheetOperations(HttpClient http)
     /// <summary>Update an existing timesheet entry.</summary>
     public async Task<TimesheetEntry> UpdateAsync(int id, TimesheetEntryUpdate entry, CancellationToken ct = default)
     {
-        var response = await http.PutAsJsonAsync($"/timesheet/entry/{id}", entry, ct);
+        var response = await http.PutAsJsonAsync($"timesheet/entry/{id}", entry, ct);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<SingleResponse<TimesheetEntry>>(ct);
@@ -88,7 +88,7 @@ public sealed class TimesheetOperations(HttpClient http)
     public async Task<ListResponse<TimesheetEntry>> UpdateBulkAsync(
         IEnumerable<TimesheetEntryUpdate> entries, CancellationToken ct = default)
     {
-        var response = await http.PutAsJsonAsync("/timesheet/entry/list", entries, ct);
+        var response = await http.PutAsJsonAsync("timesheet/entry/list", entries, ct);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<ListResponse<TimesheetEntry>>(ct);
@@ -98,7 +98,7 @@ public sealed class TimesheetOperations(HttpClient http)
     /// <summary>Delete a timesheet entry.</summary>
     public async Task DeleteAsync(int id, CancellationToken ct = default)
     {
-        var response = await http.DeleteAsync($"/timesheet/entry/{id}", ct);
+        var response = await http.DeleteAsync($"timesheet/entry/{id}", ct);
         response.EnsureSuccessStatusCode();
     }
 
@@ -108,7 +108,7 @@ public sealed class TimesheetOperations(HttpClient http)
         string? fields = null,
         CancellationToken ct = default)
     {
-        var url = $"/timesheet/entry/>recent?count={count}";
+        var url = $"timesheet/entry/>recent?count={count}";
         if (fields is not null) url += $"&fields={Uri.EscapeDataString(fields)}";
 
         var response = await http.GetFromJsonAsync<ListResponse<TimesheetEntry>>(url, ct);
@@ -122,7 +122,7 @@ public sealed class TimesheetOperations(HttpClient http)
         DateOnly dateTo,
         CancellationToken ct = default)
     {
-        var url = $"/timesheet/entry/>totalHours?employeeId={employeeId}" +
+        var url = $"timesheet/entry/>totalHours?employeeId={employeeId}" +
                   $"&dateFrom={dateFrom:yyyy-MM-dd}&dateTo={dateTo:yyyy-MM-dd}";
 
         var response = await http.GetFromJsonAsync<SingleResponse<TimesheetTotalHours>>(url, ct);
@@ -135,7 +135,7 @@ public sealed class TimesheetOperations(HttpClient http)
         DateOnly weekStartDate,
         CancellationToken ct = default)
     {
-        var url = $"/timesheet/week/:approve?employeeId={employeeId}&weekYear={weekStartDate:yyyy-MM-dd}";
+        var url = $"timesheet/week/:approve?employeeId={employeeId}&weekYear={weekStartDate:yyyy-MM-dd}";
         var response = await http.PutAsync(url, null, ct);
         response.EnsureSuccessStatusCode();
     }
@@ -146,7 +146,7 @@ public sealed class TimesheetOperations(HttpClient http)
         DateOnly weekStartDate,
         CancellationToken ct = default)
     {
-        var url = $"/timesheet/week/:unapprove?employeeId={employeeId}&weekYear={weekStartDate:yyyy-MM-dd}";
+        var url = $"timesheet/week/:unapprove?employeeId={employeeId}&weekYear={weekStartDate:yyyy-MM-dd}";
         var response = await http.PutAsync(url, null, ct);
         response.EnsureSuccessStatusCode();
     }
@@ -154,7 +154,7 @@ public sealed class TimesheetOperations(HttpClient http)
     /// <summary>Approve a timesheet month by its ID.</summary>
     public async Task ApproveMonthAsync(int id, CancellationToken ct = default)
     {
-        var response = await http.PutAsync($"/timesheet/month/:approve?id={id}", null, ct);
+        var response = await http.PutAsync($"timesheet/month/:approve?id={id}", null, ct);
         response.EnsureSuccessStatusCode();
     }
 
@@ -164,7 +164,7 @@ public sealed class TimesheetOperations(HttpClient http)
         string monthYear,
         CancellationToken ct = default)
     {
-        var url = $"/timesheet/month/:approve?employeeIds={employeeId}&monthYear={Uri.EscapeDataString(monthYear)}";
+        var url = $"timesheet/month/:approve?employeeIds={employeeId}&monthYear={Uri.EscapeDataString(monthYear)}";
         var response = await http.PutAsync(url, null, ct);
         response.EnsureSuccessStatusCode();
     }
@@ -172,7 +172,7 @@ public sealed class TimesheetOperations(HttpClient http)
     /// <summary>Unapprove a timesheet month by its ID.</summary>
     public async Task UnapproveMonthAsync(int id, CancellationToken ct = default)
     {
-        var response = await http.PutAsync($"/timesheet/month/:unapprove?id={id}", null, ct);
+        var response = await http.PutAsync($"timesheet/month/:unapprove?id={id}", null, ct);
         response.EnsureSuccessStatusCode();
     }
 
@@ -182,7 +182,7 @@ public sealed class TimesheetOperations(HttpClient http)
         string monthYear,
         CancellationToken ct = default)
     {
-        var url = $"/timesheet/month/:unapprove?employeeIds={employeeId}&monthYear={Uri.EscapeDataString(monthYear)}";
+        var url = $"timesheet/month/:unapprove?employeeIds={employeeId}&monthYear={Uri.EscapeDataString(monthYear)}";
         var response = await http.PutAsync(url, null, ct);
         response.EnsureSuccessStatusCode();
     }
@@ -199,7 +199,7 @@ public sealed class TimesheetOperations(HttpClient http)
         var query = parts.Count > 0 ? "?" + string.Join("&", parts) : "";
 
         var response = await http.GetFromJsonAsync<ListResponse<IdRef>>(
-            $"/timesheet/entry/>recentActivities{query}", ct);
+            $"timesheet/entry/>recentActivities{query}", ct);
         return response ?? new ListResponse<IdRef>();
     }
 
@@ -208,7 +208,7 @@ public sealed class TimesheetOperations(HttpClient http)
         int? employeeId = null,
         CancellationToken ct = default)
     {
-        var url = "/timesheet/entry/>recentProjects";
+        var url = "timesheet/entry/>recentProjects";
         if (employeeId.HasValue) url += $"?employeeId={employeeId}";
 
         var response = await http.GetFromJsonAsync<ListResponse<IdRef>>(url, ct);
@@ -220,7 +220,7 @@ public sealed class TimesheetOperations(HttpClient http)
         int? employeeId = null,
         CancellationToken ct = default)
     {
-        var url = "/timesheet/settings";
+        var url = "timesheet/settings";
         if (employeeId.HasValue) url += $"?employeeId={employeeId}";
 
         var response = await http.GetFromJsonAsync<SingleResponse<TimesheetSettings>>(url, ct);
@@ -293,7 +293,7 @@ public sealed class TimesheetOperations(HttpClient http)
         if (options.Fields is not null) parts.Add($"fields={Uri.EscapeDataString(options.Fields)}");
 
         var query = parts.Count > 0 ? "?" + string.Join("&", parts) : "";
-        return $"/timesheet/entry{query}";
+        return $"timesheet/entry{query}";
     }
 }
 

@@ -9,7 +9,7 @@ public sealed class EmployeeOperations(HttpClient http)
 {
     public async Task<Employee> GetAsync(int id, string? fields = null, CancellationToken ct = default)
     {
-        var url = $"/employee/{id}";
+        var url = $"employee/{id}";
         if (fields is not null) url += $"?fields={Uri.EscapeDataString(fields)}";
 
         var response = await http.GetFromJsonAsync<SingleResponse<Employee>>(url, ct);
@@ -33,7 +33,7 @@ public sealed class EmployeeOperations(HttpClient http)
         parts.Add($"count={count}");
         if (fields is not null) parts.Add($"fields={Uri.EscapeDataString(fields)}");
 
-        var url = "/employee?" + string.Join("&", parts);
+        var url = "employee?" + string.Join("&", parts);
         var response = await http.GetFromJsonAsync<ListResponse<Employee>>(url, ct);
         return response ?? new ListResponse<Employee>();
     }
@@ -44,7 +44,7 @@ public sealed class EmployeeOperations(HttpClient http)
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         await foreach (var item in PaginationExtensions.PaginateAsync<Employee>(
-            (f, c, token) => http.GetAsync($"/employee?from={f}&count={c}" +
+            (f, c, token) => http.GetAsync($"employee?from={f}&count={c}" +
                 (fields is not null ? $"&fields={Uri.EscapeDataString(fields)}" : ""), token),
             pageSize, ct))
         {
@@ -54,7 +54,7 @@ public sealed class EmployeeOperations(HttpClient http)
 
     public async Task<Employee> CreateAsync(EmployeeCreate employee, CancellationToken ct = default)
     {
-        var response = await http.PostAsJsonAsync("/employee", employee, ct);
+        var response = await http.PostAsJsonAsync("employee", employee, ct);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<SingleResponse<Employee>>(ct);
         return result?.Value ?? throw new InvalidOperationException("Failed to create employee");
@@ -62,7 +62,7 @@ public sealed class EmployeeOperations(HttpClient http)
 
     public async Task<Employee> UpdateAsync(int id, Employee employee, CancellationToken ct = default)
     {
-        var response = await http.PutAsJsonAsync($"/employee/{id}", employee, ct);
+        var response = await http.PutAsJsonAsync($"employee/{id}", employee, ct);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<SingleResponse<Employee>>(ct);
         return result?.Value ?? throw new InvalidOperationException("Failed to update employee");
