@@ -104,12 +104,14 @@ public sealed class TimesheetOperations(HttpClient http)
 
     /// <summary>Get recent timesheet entries (last 30 days, newest first).</summary>
     public Task<ListResponse<TimesheetEntry>> GetRecentAsync(
+        int? employeeId = null,
         int count = 25,
         string? fields = null,
         CancellationToken ct = default)
     {
         return SearchAsync(new TimesheetSearchOptions
         {
+            EmployeeId = employeeId,
             DateFrom = DateOnly.FromDateTime(DateTime.Today.AddDays(-30)),
             DateTo = DateOnly.FromDateTime(DateTime.Today.AddDays(1)),
             Count = count,
