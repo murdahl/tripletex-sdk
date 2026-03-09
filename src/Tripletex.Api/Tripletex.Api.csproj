@@ -9,8 +9,8 @@
     <PackageTags>tripletex;accounting;erp;api;sdk;norway</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageProjectUrl>https://github.com/olemagnusurdahl/tripletex-sdk</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/olemagnusurdahl/tripletex-sdk</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/murdahl/tripletex-sdk</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/murdahl/tripletex-sdk</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
