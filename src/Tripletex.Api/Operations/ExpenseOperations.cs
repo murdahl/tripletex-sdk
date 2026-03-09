@@ -143,6 +143,26 @@ public sealed class ExpenseOperations(HttpClient http)
         return response ?? new ListResponse<ExpenseCostCategory>();
     }
 
+    public async Task<ListResponse<ExpensePaymentType>> SearchPaymentTypesAsync(
+        bool? showOnEmployeeExpenses = null,
+        bool? showOnTravelExpenses = null,
+        int from = 0,
+        int count = 1000,
+        string? fields = null,
+        CancellationToken ct = default)
+    {
+        var parts = new List<string>();
+        if (showOnEmployeeExpenses.HasValue) parts.Add($"showOnEmployeeExpenses={showOnEmployeeExpenses.Value.ToString().ToLowerInvariant()}");
+        if (showOnTravelExpenses.HasValue) parts.Add($"showOnTravelExpenses={showOnTravelExpenses.Value.ToString().ToLowerInvariant()}");
+        parts.Add($"from={from}");
+        parts.Add($"count={count}");
+        if (fields is not null) parts.Add($"fields={Uri.EscapeDataString(fields)}");
+
+        var url = "travelExpense/paymentType?" + string.Join("&", parts);
+        var response = await http.GetFromJsonAsync<ListResponse<ExpensePaymentType>>(url, ct);
+        return response ?? new ListResponse<ExpensePaymentType>();
+    }
+
     private static string BuildSearchUrl(ExpenseSearchOptions o)
     {
         var parts = new List<string>();
@@ -261,12 +281,23 @@ public sealed class ExpenseCostCreate
     [JsonPropertyName("comments")] public string? Comments { get; set; }
     [JsonPropertyName("isPaidByEmployee")] public bool IsPaidByEmployee { get; set; } = true;
     [JsonPropertyName("isChargeable")] public bool IsChargeable { get; set; }
+    [JsonPropertyName("travelExpense")] public IdRef? TravelExpense { get; set; }
 }
 
 public sealed class ExpenseCostCategory
 {
     [JsonPropertyName("id")] public int Id { get; set; }
     [JsonPropertyName("version")] public int Version { get; set; }
+    [JsonPropertyName("description")] public string? Description { get; set; }
+    [JsonPropertyName("showOnTravelExpenses")] public bool ShowOnTravelExpenses { get; set; }
+    [JsonPropertyName("showOnEmployeeExpenses")] public bool ShowOnEmployeeExpenses { get; set; }
+    [JsonPropertyName("isInactive")] public bool IsInactive { get; set; }
+    [JsonPropertyName("displayName")] public string? DisplayName { get; set; }
+}
+
+public sealed class ExpensePaymentType
+{
+    [JsonPropertyName("id")] public int Id { get; set; }
     [JsonPropertyName("description")] public string? Description { get; set; }
     [JsonPropertyName("showOnTravelExpenses")] public bool ShowOnTravelExpenses { get; set; }
     [JsonPropertyName("showOnEmployeeExpenses")] public bool ShowOnEmployeeExpenses { get; set; }

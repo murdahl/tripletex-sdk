@@ -25,7 +25,7 @@ public static class TimesheetCommand
 
     private enum LogStep { Employee, Project, Activity, Hours, Date, Comment, Confirm }
 
-    private const string BackSentinel = "← Back";
+    internal const string BackSentinel = "← Back";
 
     private static Command CreateLogCommand(Option<bool> jsonOption)
     {
@@ -217,9 +217,9 @@ public static class TimesheetCommand
         return cmd;
     }
 
-    private const string FilterSentinelLabel = "[blue]Filter...[/]";
+    internal const string FilterSentinelLabel = "[blue]Filter...[/]";
 
-    private static T? FilterableSelect<T>(
+    internal static T? FilterableSelect<T>(
         string title,
         IReadOnlyList<T> items,
         Func<T, string> searchText,
@@ -275,7 +275,7 @@ public static class TimesheetCommand
         }
     }
 
-    private static async Task<(int id, string name)?> PromptEmployeeAsync(
+    internal static async Task<(int id, string name)?> PromptEmployeeAsync(
         TripletexClient client, CliConfig config, bool canGoBack)
     {
         AnsiConsole.MarkupLine("[dim]Fetching employees...[/]");
@@ -317,7 +317,7 @@ public static class TimesheetCommand
         return (emp.Id, name);
     }
 
-    private static async Task<(int id, string? name, bool isBack)?> PromptProjectWithBackAsync(
+    internal static async Task<(int id, string? name, bool isBack)?> PromptProjectWithBackAsync(
         TripletexClient client, CliConfig config, bool canGoBack)
     {
         AnsiConsole.MarkupLine("[dim]No default project set. Fetching projects...[/]");

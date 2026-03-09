@@ -21,6 +21,7 @@ rootCommand.AddCommand(EmployeeCommand.Create(jsonOption));
 rootCommand.AddCommand(CustomerCommand.Create(jsonOption));
 rootCommand.AddCommand(InvoiceCommand.Create(jsonOption));
 rootCommand.AddCommand(SupplierCommand.Create(jsonOption));
+rootCommand.AddCommand(ExpenseCommand.Create(jsonOption));
 
 var parser = new CommandLineBuilder(rootCommand)
     .UseDefaults()
