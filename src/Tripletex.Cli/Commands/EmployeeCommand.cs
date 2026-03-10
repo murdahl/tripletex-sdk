@@ -17,15 +17,14 @@ public static class EmployeeCommand
 
     private static Command CreateGetCommand(Option<bool> jsonOption)
     {
-        var id = new Argument<int>("id", "Employee ID");
+        var id = new Argument<int?>("id") { Arity = ArgumentArity.ZeroOrOne, Description = "Employee ID" };
         var cmd = new Command("get", "Get an employee by ID") { id };
 
         cmd.SetHandler(async (eid, json) =>
         {
             var config = ConfigStore.Load();
             using var client = ClientFactory.Create(config);
-            var employee = await client.Employee.GetAsync(eid);
-            OutputFormatter.Print(employee, json);
+            await OutputFormatter.FetchAndPrint(OutputFormatter.ResolveIds(eid), id => client.Employee.GetAsync(id), json);
         }, id, jsonOption);
 
         return cmd;

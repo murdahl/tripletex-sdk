@@ -11,7 +11,7 @@ public static class OutputFormatter
 
     public static void Print<T>(T item, bool json) where T : class
     {
-        if (json)
+        if (json || Console.IsOutputRedirected)
         {
             Console.WriteLine(JsonSerializer.Serialize(item, JsonOptions));
             return;
@@ -33,7 +33,7 @@ public static class OutputFormatter
 
     public static void PrintList<T>(IReadOnlyList<T> items, bool json) where T : class
     {
-        if (json)
+        if (json || Console.IsOutputRedirected)
         {
             Console.WriteLine(JsonSerializer.Serialize(items, JsonOptions));
             return;
@@ -59,6 +59,24 @@ public static class OutputFormatter
 
         AnsiConsole.Write(table);
     }
+
+    public static async Task FetchAndPrint<T>(List<int> ids, Func<int, Task<T>> fetch, bool json) where T : class
+    {
+        if (ids.Count == 1)
+        {
+            Print(await fetch(ids[0]), json);
+            return;
+        }
+
+        var items = new List<T>();
+        foreach (var id in ids)
+            items.Add(await fetch(id));
+        PrintList<T>(items, json);
+    }
+
+    public static List<int> ResolveIds(int? arg) =>
+        arg.HasValue ? [arg.Value] : StdinReader.TryReadIds()
+            ?? throw new InvalidOperationException("No ID provided. Pass an ID argument or pipe IDs via stdin.");
 
     private static string FormatValue(object? value) => value switch
     {

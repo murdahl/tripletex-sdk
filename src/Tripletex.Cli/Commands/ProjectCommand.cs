@@ -35,15 +35,14 @@ public static class ProjectCommand
 
     private static Command CreateGetCommand(Option<bool> jsonOption)
     {
-        var id = new Argument<int>("id", "Project ID");
+        var id = new Argument<int?>("id") { Arity = ArgumentArity.ZeroOrOne, Description = "Project ID" };
         var cmd = new Command("get", "Get a project by ID") { id };
 
         cmd.SetHandler(async (projectId, json) =>
         {
             var config = ConfigStore.Load();
             using var client = ClientFactory.Create(config);
-            var project = await client.Project.GetAsync(projectId);
-            OutputFormatter.Print(project, json);
+            await OutputFormatter.FetchAndPrint(OutputFormatter.ResolveIds(projectId), id => client.Project.GetAsync(id), json);
         }, id, jsonOption);
 
         return cmd;

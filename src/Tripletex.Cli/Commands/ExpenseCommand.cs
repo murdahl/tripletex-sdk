@@ -21,15 +21,14 @@ public static class ExpenseCommand
 
     private static Command CreateGetCommand(Option<bool> jsonOption)
     {
-        var id = new Argument<int>("id", "Expense ID");
+        var id = new Argument<int?>("id") { Arity = ArgumentArity.ZeroOrOne, Description = "Expense ID" };
         var cmd = new Command("get", "Get an expense by ID") { id };
 
         cmd.SetHandler(async (expenseId, json) =>
         {
             var config = ConfigStore.Load();
             using var client = ClientFactory.Create(config);
-            var expense = await client.Expense.GetAsync(expenseId);
-            OutputFormatter.Print(expense, json);
+            await OutputFormatter.FetchAndPrint(OutputFormatter.ResolveIds(expenseId), id => client.Expense.GetAsync(id), json);
         }, id, jsonOption);
 
         return cmd;
@@ -100,6 +99,10 @@ public static class ExpenseCommand
 
         cmd.SetHandler(async (eid, json) =>
         {
+            if (Console.IsInputRedirected)
+                throw new InvalidOperationException(
+                    "Cannot run interactive add-cost with piped stdin. This command requires interactive prompts.");
+
             var config = ConfigStore.Load();
             using var client = ClientFactory.Create(config);
 
@@ -129,6 +132,10 @@ public static class ExpenseCommand
 
         cmd.SetHandler(async (json) =>
         {
+            if (Console.IsInputRedirected)
+                throw new InvalidOperationException(
+                    "Cannot run interactive expense creation with piped stdin. This command requires interactive prompts.");
+
             var config = ConfigStore.Load();
             using var client = ClientFactory.Create(config);
 

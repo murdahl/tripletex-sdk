@@ -16,15 +16,14 @@ public static class InvoiceCommand
 
     private static Command CreateGetCommand(Option<bool> jsonOption)
     {
-        var id = new Argument<int>("id", "Invoice ID");
+        var id = new Argument<int?>("id") { Arity = ArgumentArity.ZeroOrOne, Description = "Invoice ID" };
         var cmd = new Command("get", "Get an invoice by ID") { id };
 
         cmd.SetHandler(async (iid, json) =>
         {
             var config = ConfigStore.Load();
             using var client = ClientFactory.Create(config);
-            var invoice = await client.Invoice.GetAsync(iid);
-            OutputFormatter.Print(invoice, json);
+            await OutputFormatter.FetchAndPrint(OutputFormatter.ResolveIds(iid), id => client.Invoice.GetAsync(id), json);
         }, id, jsonOption);
 
         return cmd;

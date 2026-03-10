@@ -17,15 +17,14 @@ public static class CustomerCommand
 
     private static Command CreateGetCommand(Option<bool> jsonOption)
     {
-        var id = new Argument<int>("id", "Customer ID");
+        var id = new Argument<int?>("id") { Arity = ArgumentArity.ZeroOrOne, Description = "Customer ID" };
         var cmd = new Command("get", "Get a customer by ID") { id };
 
         cmd.SetHandler(async (cid, json) =>
         {
             var config = ConfigStore.Load();
             using var client = ClientFactory.Create(config);
-            var customer = await client.Customer.GetAsync(cid);
-            OutputFormatter.Print(customer, json);
+            await OutputFormatter.FetchAndPrint(OutputFormatter.ResolveIds(cid), id => client.Customer.GetAsync(id), json);
         }, id, jsonOption);
 
         return cmd;

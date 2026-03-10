@@ -72,6 +72,10 @@ public static class TimesheetCommand
 
             var firstStep = step;
 
+            if (step != LogStep.Confirm && Console.IsInputRedirected)
+                throw new InvalidOperationException(
+                    "Cannot run interactive timesheet log with piped stdin. Provide all options via arguments: --employee-id, --project-id, --activity-id, hours, --date, --comment.");
+
             while (step != LogStep.Confirm || true)
             {
                 switch (step)
@@ -488,15 +492,14 @@ public static class TimesheetCommand
 
     private static Command CreateGetCommand(Option<bool> jsonOption)
     {
-        var id = new Argument<int>("id", "Timesheet entry ID");
+        var id = new Argument<int?>("id") { Arity = ArgumentArity.ZeroOrOne, Description = "Timesheet entry ID" };
         var cmd = new Command("get", "Get a timesheet entry by ID") { id };
 
         cmd.SetHandler(async (entryId, json) =>
         {
             var config = ConfigStore.Load();
             using var client = ClientFactory.Create(config);
-            var entry = await client.Timesheet.GetAsync(entryId);
-            OutputFormatter.Print(entry, json);
+            await OutputFormatter.FetchAndPrint(OutputFormatter.ResolveIds(entryId), id => client.Timesheet.GetAsync(id), json);
         }, id, jsonOption);
 
         return cmd;

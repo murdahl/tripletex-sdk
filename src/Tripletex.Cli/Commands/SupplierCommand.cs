@@ -17,15 +17,14 @@ public static class SupplierCommand
 
     private static Command CreateGetCommand(Option<bool> jsonOption)
     {
-        var id = new Argument<int>("id", "Supplier ID");
+        var id = new Argument<int?>("id") { Arity = ArgumentArity.ZeroOrOne, Description = "Supplier ID" };
         var cmd = new Command("get", "Get a supplier by ID") { id };
 
         cmd.SetHandler(async (sid, json) =>
         {
             var config = ConfigStore.Load();
             using var client = ClientFactory.Create(config);
-            var supplier = await client.Supplier.GetAsync(sid);
-            OutputFormatter.Print(supplier, json);
+            await OutputFormatter.FetchAndPrint(OutputFormatter.ResolveIds(sid), id => client.Supplier.GetAsync(id), json);
         }, id, jsonOption);
 
         return cmd;
