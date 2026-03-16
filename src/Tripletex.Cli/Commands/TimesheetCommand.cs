@@ -335,6 +335,8 @@ public static class TimesheetCommand
         }
 
         var sorted = projects.OrderBy(p => p.Name).ToList();
+        var internalSentinel = new Project { Id = 0, Name = "Internal (no project)" };
+        sorted.Insert(0, internalSentinel);
         var backSentinel = canGoBack ? new Project { Id = -1, Name = BackSentinel } : null;
         if (backSentinel is not null) sorted.Insert(0, backSentinel);
 
@@ -365,17 +367,28 @@ public static class TimesheetCommand
     private static async Task<(int id, string? name, bool isBack)?> PromptActivityWithBackAsync(
         TripletexClient client, CliConfig config, int projectId, bool canGoBack)
     {
-        AnsiConsole.MarkupLine("[dim]Fetching activities for project...[/]");
-        var project = await client.Project.GetAsync(projectId, fields: "projectActivities(activity(*))");
-        var projectActivities = project.ProjectActivities?
-            .Where(pa => !pa.IsClosed)
-            .Select(pa => new Activity
-            {
-                Id = pa.Activity?.Id ?? pa.Id,
-                Name = pa.Activity?.Name,
-                DisplayName = pa.Activity?.DisplayName,
-            })
-            .ToList() ?? [];
+        List<Activity> projectActivities;
+
+        if (projectId == 0)
+        {
+            AnsiConsole.MarkupLine("[dim]Fetching internal (non-project) activities...[/]");
+            var result = await client.Activity.SearchAsync(isProjectActivity: false, isInactive: false);
+            projectActivities = (result.Values ?? []).ToList();
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[dim]Fetching activities for project...[/]");
+            var project = await client.Project.GetAsync(projectId, fields: "projectActivities(activity(*))");
+            projectActivities = project.ProjectActivities?
+                .Where(pa => !pa.IsClosed)
+                .Select(pa => new Activity
+                {
+                    Id = pa.Activity?.Id ?? pa.Id,
+                    Name = pa.Activity?.Name,
+                    DisplayName = pa.Activity?.DisplayName,
+                })
+                .ToList() ?? [];
+        }
 
         if (projectActivities.Count == 0)
         {

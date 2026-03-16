@@ -14,12 +14,18 @@ public sealed class ActivityOperations(HttpClient http)
 
     public async Task<ListResponse<Activity>> SearchAsync(
         string? name = null,
+        bool? isProjectActivity = null,
+        bool? isGeneral = null,
+        bool? isInactive = null,
         int from = 0,
         int count = 1000,
         CancellationToken ct = default)
     {
         var parts = new List<string>();
         if (name is not null) parts.Add($"name={Uri.EscapeDataString(name)}");
+        if (isProjectActivity.HasValue) parts.Add($"isProjectActivity={isProjectActivity.Value.ToString().ToLowerInvariant()}");
+        if (isGeneral.HasValue) parts.Add($"isGeneral={isGeneral.Value.ToString().ToLowerInvariant()}");
+        if (isInactive.HasValue) parts.Add($"isInactive={isInactive.Value.ToString().ToLowerInvariant()}");
         parts.Add($"from={from}");
         parts.Add($"count={count}");
 

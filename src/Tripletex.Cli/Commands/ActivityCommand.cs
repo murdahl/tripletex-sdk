@@ -27,26 +27,34 @@ public static class ActivityCommand
 
             using var client = ClientFactory.Create(config);
 
-            if (resolvedProjectId is null)
+            List<Api.Operations.Activity> activities;
+
+            if (resolvedProjectId is null or 0)
             {
-                AnsiConsole.MarkupLine("[yellow]No project specified. Use --project-id or set a default project first.[/]");
-                return;
+                AnsiConsole.MarkupLine("[dim]Fetching internal (non-project) activities...[/]");
+
+                var result = await client.Activity.SearchAsync(isProjectActivity: false, isInactive: false);
+                activities = (result.Values ?? [])
+                    .OrderBy(a => a.DisplayName ?? a.Name ?? "")
+                    .ToList();
             }
+            else
+            {
+                var projectLabel = config.DefaultProjectName ?? resolvedProjectId.ToString()!;
+                AnsiConsole.MarkupLine($"[dim]Fetching activities for project {Markup.Escape(projectLabel)}...[/]");
 
-            var projectLabel = config.DefaultProjectName ?? resolvedProjectId.ToString()!;
-            AnsiConsole.MarkupLine($"[dim]Fetching activities for project {Markup.Escape(projectLabel)}...[/]");
-
-            var project = await client.Project.GetAsync(resolvedProjectId.Value, fields: "projectActivities(activity(*))");
-            var activities = (project.ProjectActivities ?? [])
-                .Where(pa => !pa.IsClosed)
-                .Select(pa => new Api.Operations.Activity
-                {
-                    Id = pa.Activity?.Id ?? pa.Id,
-                    Name = pa.Activity?.Name,
-                    DisplayName = pa.Activity?.DisplayName,
-                })
-                .OrderBy(a => a.DisplayName ?? a.Name ?? "")
-                .ToList();
+                var project = await client.Project.GetAsync(resolvedProjectId.Value, fields: "projectActivities(activity(*))");
+                activities = (project.ProjectActivities ?? [])
+                    .Where(pa => !pa.IsClosed)
+                    .Select(pa => new Api.Operations.Activity
+                    {
+                        Id = pa.Activity?.Id ?? pa.Id,
+                        Name = pa.Activity?.Name,
+                        DisplayName = pa.Activity?.DisplayName,
+                    })
+                    .OrderBy(a => a.DisplayName ?? a.Name ?? "")
+                    .ToList();
+            }
 
             if (activities.Count == 0)
             {
